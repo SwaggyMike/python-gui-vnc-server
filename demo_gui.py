@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Minimal GUI demo for VNC/noVNC containers."""
 
 from datetime import datetime
 import os
@@ -9,121 +8,65 @@ from dateutil import tz
 import humanize
 
 
-def _int_env(name: str, default: int) -> int:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
+def int_env(name: str, default: int) -> int:
     try:
-        return int(raw)
-    except ValueError:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
         return default
 
 
-class MinimalDemo:
+class DemoApp:
     def __init__(self, root: tk.Tk) -> None:
+        width = int_env("SCREEN_WIDTH", root.winfo_screenwidth())
+        height = int_env("SCREEN_HEIGHT", root.winfo_screenheight())
+
         self.root = root
-        self.root.title("Minimal Python GUI Demo")
+        self.root.title("python-gui-vnc-server demo")
+        self.root.geometry(f"{width}x{height}+0+0")
 
-        # Match the app window to container display dimensions when available.
-        screen_width = _int_env("SCREEN_WIDTH", root.winfo_screenwidth())
-        screen_height = _int_env("SCREEN_HEIGHT", root.winfo_screenheight())
-        self.root.geometry(f"{screen_width}x{screen_height}+0+0")
-
-        self.root.configure(bg="#0f172a")
-
-        frame = tk.Frame(root, bg="#0f172a", padx=20, pady=20)
+        frame = tk.Frame(root, padx=16, pady=16)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        title = tk.Label(
-            frame,
-            text="Container GUI Demo",
-            font=("DejaVu Sans", 16, "bold"),
-            bg="#0f172a",
-            fg="#f8fafc",
-        )
-        title.pack(anchor="w", pady=(0, 14))
+        tk.Label(frame, text="python-gui-vnc-server", font=("TkDefaultFont", 14, "bold")).pack(anchor="w")
 
-        self.time_label = tk.Label(
-            frame,
-            text="",
-            font=("DejaVu Sans Mono", 12),
-            bg="#0f172a",
-            fg="#93c5fd",
-        )
-        self.time_label.pack(anchor="w")
+        self.time_label = tk.Label(frame, text="")
+        self.time_label.pack(anchor="w", pady=(8, 0))
 
-        self.uptime_label = tk.Label(
-            frame,
-            text="",
-            font=("DejaVu Sans", 12),
-            bg="#0f172a",
-            fg="#cbd5e1",
-        )
-        self.uptime_label.pack(anchor="w", pady=(8, 0))
+        self.uptime_label = tk.Label(frame, text="")
+        self.uptime_label.pack(anchor="w")
 
-        self.count = 0
-        self.count_label = tk.Label(
-            frame,
-            text="Clicks: 0",
-            font=("DejaVu Sans", 12),
-            bg="#0f172a",
-            fg="#86efac",
-        )
-        self.count_label.pack(anchor="w", pady=(8, 16))
+        self.clicks = 0
+        self.clicks_label = tk.Label(frame, text="Clicks: 0")
+        self.clicks_label.pack(anchor="w", pady=(8, 12))
 
-        button_row = tk.Frame(frame, bg="#0f172a")
-        button_row.pack(anchor="w")
+        buttons = tk.Frame(frame)
+        buttons.pack(anchor="w")
 
-        increment_button = tk.Button(
-            button_row,
-            text="Increment",
-            command=self.increment,
-            padx=10,
-            pady=6,
-            relief=tk.FLAT,
-            bg="#2563eb",
-            fg="white",
-            activebackground="#1d4ed8",
-            activeforeground="white",
-        )
-        increment_button.pack(side=tk.LEFT)
-
-        quit_button = tk.Button(
-            button_row,
-            text="Quit",
-            command=root.destroy,
-            padx=10,
-            pady=6,
-            relief=tk.FLAT,
-            bg="#ef4444",
-            fg="white",
-            activebackground="#dc2626",
-            activeforeground="white",
-        )
-        quit_button.pack(side=tk.LEFT, padx=(10, 0))
+        tk.Button(buttons, text="Increment", command=self.increment).pack(side=tk.LEFT)
+        tk.Button(buttons, text="Quit", command=self.root.destroy).pack(side=tk.LEFT, padx=(8, 0))
 
         self.started = datetime.now(tz.UTC)
-        self.tick()
+        self.update_view()
 
     def increment(self) -> None:
-        self.count += 1
-        self.count_label.configure(text=f"Clicks: {self.count}")
+        self.clicks += 1
+        self.clicks_label.config(text=f"Clicks: {self.clicks}")
 
-    def tick(self) -> None:
+    def update_view(self) -> None:
         now_local = datetime.now(tz.tzlocal())
         elapsed = datetime.now(tz.UTC) - self.started
 
-        self.time_label.configure(text=f"Local time: {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}")
-        self.uptime_label.configure(
+        self.time_label.config(text=f"Local time: {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        self.uptime_label.config(
             text=f"Uptime: {humanize.precisedelta(elapsed, minimum_unit='seconds')}"
         )
 
-        self.root.after(1000, self.tick)
+        self.root.after(1000, self.update_view)
 
 
 def main() -> None:
     root = tk.Tk()
-    MinimalDemo(root)
+    DemoApp(root)
     root.mainloop()
 
 

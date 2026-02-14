@@ -1,16 +1,5 @@
 FROM fedora:latest
 
-ENV DISPLAY=:1 \
-    VNC_PORT=5900 \
-    NOVNC_PORT=6080 \
-    VNC_PASSWORD=containergui \
-    SCREEN_WIDTH=1280 \
-    SCREEN_HEIGHT=800 \
-    SCREEN_DEPTH=24 \
-    APP_WORKDIR=/workspace \
-    APP_COMMAND="python3 /opt/demo/demo_gui.py" \
-    PYTHONUNBUFFERED=1
-
 RUN dnf -y install --setopt=install_weak_deps=False \
       novnc \
       python3 \
@@ -22,18 +11,25 @@ RUN dnf -y install --setopt=install_weak_deps=False \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
-WORKDIR /opt/demo
+WORKDIR /app
 
-COPY requirements.txt /opt/demo/requirements.txt
-COPY demo_gui.py /opt/demo/demo_gui.py
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY requirements.txt /app/requirements.txt
+COPY demo_gui.py /app/demo_gui.py
+COPY entrypoint.sh /app/entrypoint.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh && \
-    mkdir -p /workspace && \
-    if [ -s /opt/demo/requirements.txt ]; then \
-      pip3 install --no-cache-dir -r /opt/demo/requirements.txt; \
+RUN chmod +x /app/entrypoint.sh && \
+    if [ -s /app/requirements.txt ]; then \
+      pip3 install --no-cache-dir -r /app/requirements.txt; \
     fi
+
+ENV DISPLAY=:1 \
+    VNC_PORT=5900 \
+    NOVNC_PORT=6080 \
+    VNC_PASSWORD=containergui \
+    SCREEN_WIDTH=1280 \
+    SCREEN_HEIGHT=800 \
+    SCREEN_DEPTH=24
 
 EXPOSE 5900 6080
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

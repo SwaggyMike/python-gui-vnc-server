@@ -1,20 +1,13 @@
 # python-gui-vnc-server
 
-Fedora-based container for running a single Python GUI application over VNC and noVNC.
+Fedora image for running one Python GUI app over VNC/noVNC.
 
-## Components
+## Included
 
-- Xvfb (virtual display)
-- x11vnc (VNC server)
-- noVNC + websockify (browser client)
+- Xvfb
+- x11vnc
+- noVNC + websockify
 - Python 3 + Tkinter
-
-## Files
-
-- `Dockerfile`
-- `entrypoint.sh`
-- `demo_gui.py`
-- `requirements.txt`
 
 ## Build
 
@@ -22,7 +15,7 @@ Fedora-based container for running a single Python GUI application over VNC and 
 podman build -t python-gui-vnc-server .
 ```
 
-## Run Demo
+## Run demo
 
 ```sh
 podman run --rm --name python-gui-vnc-server \
@@ -36,48 +29,48 @@ podman run --rm --name python-gui-vnc-server \
 
 - noVNC: `http://localhost:6080/vnc.html`
 - VNC: `localhost:5900`
-- Default VNC password: `containergui`
+- Password: `containergui`
 
-## Run Your Own App
+## Run your own app
 
-Mount your project and set `APP_COMMAND`.
+Use your project as `/app` and set `APP_COMMAND`.
 
 ```sh
 podman run --rm --name python-gui-vnc-server-app \
   -p 5900:5900 \
   -p 6080:6080 \
   -e VNC_PASSWORD=containergui \
-  -e APP_WORKDIR=/workspace \
-  -e APP_COMMAND="python3 main.py -g" \
-  -v "$PWD:/workspace:Z" \
+  -e APP_WORKDIR=/app \
+  -e APP_COMMAND="python3 your_app.py" \
+  -v "$PWD:/app:Z" \
   python-gui-vnc-server
 ```
 
-The container exits when `APP_COMMAND` exits.
+The container stops when `APP_COMMAND` exits.
 
 ## Dependencies
 
-Edit `requirements.txt` and rebuild:
+Update `requirements.txt`, then rebuild.
 
 ```sh
 podman build -t python-gui-vnc-server .
 ```
 
-For project-specific dependencies, create a child image:
+For project-specific dependencies, use a child image:
 
 ```dockerfile
 FROM python-gui-vnc-server
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
-COPY . /workspace
-ENV APP_COMMAND="python3 main.py -g"
+COPY . /app
+ENV APP_COMMAND="python3 your_app.py"
 ```
 
-## Environment Variables
+## Environment variables
 
-- `VNC_PASSWORD` (default: `containergui`)
-- `APP_WORKDIR` (default: `/workspace`)
-- `APP_COMMAND` (default: `python3 /opt/demo/demo_gui.py`)
-- `SCREEN_WIDTH` (default: `1280`)
-- `SCREEN_HEIGHT` (default: `800`)
-- `SCREEN_DEPTH` (default: `24`)
+- `VNC_PASSWORD` default: `containergui`
+- `APP_WORKDIR` default: `/app`
+- `APP_COMMAND` default: `python3 /app/demo_gui.py`
+- `SCREEN_WIDTH` default: `1280`
+- `SCREEN_HEIGHT` default: `800`
+- `SCREEN_DEPTH` default: `24`

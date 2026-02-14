@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${DISPLAY:=:1}"
-: "${VNC_PORT:=5900}"
-: "${NOVNC_PORT:=6080}"
-: "${VNC_PASSWORD:=containergui}"
-: "${SCREEN_WIDTH:=1280}"
-: "${SCREEN_HEIGHT:=800}"
-: "${SCREEN_DEPTH:=24}"
-: "${APP_WORKDIR:=/workspace}"
-: "${APP_COMMAND:=python3 /opt/demo/demo_gui.py}"
+DISPLAY="${DISPLAY:-:1}"
+VNC_PORT="${VNC_PORT:-5900}"
+NOVNC_PORT="${NOVNC_PORT:-6080}"
+VNC_PASSWORD="${VNC_PASSWORD:-containergui}"
+SCREEN_WIDTH="${SCREEN_WIDTH:-1280}"
+SCREEN_HEIGHT="${SCREEN_HEIGHT:-800}"
+SCREEN_DEPTH="${SCREEN_DEPTH:-24}"
+APP_WORKDIR="${APP_WORKDIR:-/app}"
+APP_COMMAND="${APP_COMMAND:-python3 /app/demo_gui.py}"
 
 mkdir -p /tmp/.X11-unix /root/.vnc "${APP_WORKDIR}"
 chmod 1777 /tmp/.X11-unix
@@ -32,18 +32,10 @@ x11vnc \
   -xkb \
   >/tmp/x11vnc.log 2>&1 &
 
-if [ ! -d "/usr/share/novnc" ]; then
-  echo "Could not find noVNC assets at /usr/share/novnc" >&2
-  exit 1
-fi
-
 websockify --web /usr/share/novnc "${NOVNC_PORT}" "localhost:${VNC_PORT}" >/tmp/novnc.log 2>&1 &
 
-echo "Container GUI started"
-echo "VNC endpoint:   localhost:${VNC_PORT}"
-echo "noVNC endpoint: http://localhost:${NOVNC_PORT}/vnc.html"
-echo "App command:    ${APP_COMMAND}"
+echo "VNC: localhost:${VNC_PORT}"
+echo "noVNC: http://localhost:${NOVNC_PORT}/vnc.html"
+echo "App: ${APP_COMMAND}"
 
-sleep 0.3
-
-exec bash -lc "cd \"${APP_WORKDIR}\" && DISPLAY=\"${DISPLAY}\" ${APP_COMMAND}"
+exec sh -lc "cd \"${APP_WORKDIR}\" && DISPLAY=\"${DISPLAY}\" ${APP_COMMAND}"
